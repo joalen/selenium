@@ -37,7 +37,7 @@ jobs:
         brew unlink bazelisk
         brew install --cask brewlet
 
-        wget https://github.com/bazelbuild/bazel/releases/download/7.1.0/bazel-7.1.0-installer-darwin-x86_64.sh"
+        wget https://github.com/bazelbuild/bazel/releases/download/7.1.0/bazel-7.1.0-installer-darwin-x86_64.sh
         chmod +x bazel-7.1.0-installer-darwin-x86_64.sh
         ./bazel-7.1.0-installer-darwin-x86_64.sh --user
   
