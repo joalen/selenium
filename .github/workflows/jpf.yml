@@ -17,7 +17,7 @@ jobs:
       with:
         ref: 2f7ac692524b16edf18feaebed093e3be50135dc 
 
-    - name: Install Bazel 7.1.1 (Linux)
+    - name: Install Bazel 7.1.0 (Linux)
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
@@ -26,17 +26,20 @@ jobs:
         sudo mv bazel-archive-keyring.gpg /usr/share/keyrings
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
         sudo apt-get update
-        sudo apt-get install -y bazel-7.1.1
+        sudo apt-get install -y bazel-7.1.0
         sudo apt-get upgrade bazel
 
-    - name: Install Bazel 7.1.1 (macOS)
+    - name: Install Bazel 7.1.0 (macOS)
       if: runner.os == 'macOS'
       run: | 
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         brew update
         brew unlink bazelisk
         brew install --cask brewlet
-        brew install bazel
+
+        wget https://github.com/bazelbuild/bazel/releases/download/7.1.0/bazel-7.1.0-installer-darwin-x86_64.sh"
+        chmod +x bazel-7.1.0-installer-darwin-x86_64.sh
+        ./bazel-7.1.0-installer-darwin-x86_64.sh --user
   
     - name: Set up JDK 17 for project
       uses: actions/setup-java@v3
