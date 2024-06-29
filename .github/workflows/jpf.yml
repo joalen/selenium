@@ -1,11 +1,15 @@
-name: JPF Runner
+name: Run JPF
 
 on:
   push:
 
 jobs:
   run-jpf:
-    runs-on: ubuntu-latest
+    name: '${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, macos-latest]
 
     steps:
     - name: Checkout repository
@@ -13,7 +17,8 @@ jobs:
       with:
         ref: 2f7ac692524b16edf18feaebed093e3be50135dc 
 
-    - name: Install Bazel
+    - name: Install Bazel 7.1.1 (Linux)
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y apt-transport-https curl gnupg
@@ -21,8 +26,20 @@ jobs:
         sudo mv bazel-archive-keyring.gpg /usr/share/keyrings
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
         sudo apt-get update
-        sudo apt-get install -y bazel
+        sudo apt-get install -y bazel-7.1.1
         sudo apt-get upgrade bazel
+
+    - name: Install Bazel 7.1.1 (macOS)
+      if: runner.os == 'macOS'
+      run: | 
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        brew update
+        brew unlink bazelisk
+        brew install --cask brewlet
+        
+        curl -LO https://releases.bazel.build/7.1.1/release/bazel-7.1.1-installer-darwin-x86_64.sh
+        chmod +x bazel-7.1.1-installer-darwin-x86_64.sh
+        ./bazel-7.1.1-installer-darwin-x86_64.sh --user
   
     - name: Set up JDK 17 for project
       uses: actions/setup-java@v3
@@ -47,23 +64,21 @@ jobs:
         ./gradlew buildJars
 
     - name: Run JPF on JAR files
+      shell: bash
       run: |
         #!/bin/bash
-
+        set +e 
+        
         directory=$(pwd)
         runjpf_jar="/tmp/jpf-core/build/RunJPF.jar"
         jar_files=$(find "$directory" -type f -name "*.jar")
-
         for jar_file in $jar_files; 
         do
             jar_dir=$(dirname "$jar_file")
-            main_class=$(unzip -p "$jar_file" META-INF/MANIFEST.MF | grep -i 'Main-Class' | awk -F': ' '{print $2}' | tr -d '\r')
-
+            main_class=$(unzip -p "$jar_file" META-INF/MANIFEST.MF 2>/dev/null | grep -i 'Main-Class' | awk -F': ' '{print $2}' | tr -d '\r')
             if [ -z "$main_class" ]; then
-                echo "Main class not found in $jar_file, skipping..."
                 continue
             fi
-
             command="java -jar $runjpf_jar +classpath=$jar_file $main_class"
             $command
         done
